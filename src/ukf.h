@@ -60,7 +60,10 @@ class UKF {
   // predicted sigma points matrix
   Eigen::MatrixXd Xsig_pred_;
 
-  // time when the state is true, in us
+  // mean of predicted sigma points
+  Eigen::VectorXd x_pred_;
+
+  // time when the state is true, in microseconds us == nu s
   long long time_us_;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
@@ -95,6 +98,9 @@ class UKF {
 
   // Sigma point spreading parameter
   double lambda_;
+
+  // number of sigma points
+  int n_sig_; 
 };
 
 #endif  // UKF_H
