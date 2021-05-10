@@ -5,6 +5,10 @@
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
+double normalizeAngle(double angle) {
+    return atan2(sin(angle), cos(angle));
+}   
+
 /**
  * Initializes Unscented Kalman filter
  */
@@ -224,8 +228,8 @@ void UKF::Prediction(double delta_t) {
       VectorXd tmp = Xsig_pred_.col(i) - x_;
 
       // angle normalization
-      while (tmp(3)> M_PI) tmp(3)-=2.*M_PI;
-      while (tmp(3)<-M_PI) tmp(3)+=2.*M_PI;
+      if (tmp(3) > M_PI || tmp(3) < -M_PI)
+        tmp(3) = normalizeAngle(tmp(3));
 
       P_ += weights_(i) * tmp * tmp.transpose();
   }
@@ -271,9 +275,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     //new estimate
     x_ = x_ + K * y;
     // std::cout << x_ << std::endl;
+    if (x_(3) > M_PI || x_(3) < -M_PI)
+        x_(3) = normalizeAngle(x_(3));
 
-    while (x_(3)> M_PI) x_(3)-=2.*M_PI;
-    while (x_(3)<-M_PI) x_(3)+=2.*M_PI;
     MatrixXd I = MatrixXd::Identity(n_x_, n_x_);
     P_ = (I - K * H_) * P_;
   }
@@ -357,8 +361,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
       VectorXd tmp = Zsig.col(i) - z_pred;
 
       // angle normalization
-      while (tmp(1)> M_PI) tmp(1)-=2.*M_PI;
-      while (tmp(1)<-M_PI) tmp(1)+=2.*M_PI;
+      if (tmp(1) > M_PI || tmp(1) < -M_PI)
+        tmp(1) = normalizeAngle(tmp(1));
 
       S += weights_(i) * tmp * tmp.transpose();
     }
@@ -371,16 +375,18 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     for (int i = 0; i < n_sig_; i++){
       // residual
       VectorXd z_diff = Zsig.col(i) - z_pred;
+      
       // angle normalization
-      while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-      while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+      if (z_diff(1) > M_PI || z_diff(1) < -M_PI)
+        z_diff(1) = normalizeAngle(z_diff(1));
 
       // state difference
       VectorXd x_diff = Xsig_pred_.col(i) - x_;
+      
       // angle normalization
-      while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
-      while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
-
+      if (x_diff(3) > M_PI || x_diff(3) < -M_PI)
+        x_diff(3) = normalizeAngle(x_diff(3));
+    
       Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
     }
     // calculate Kalman gain K;
@@ -390,8 +396,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     VectorXd z_diff = meas_package.raw_measurements_ - z_pred;
 
     // angle normalization
-    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+    if (z_diff(1) > M_PI || z_diff(1) < -M_PI)
+      z_diff(1) = normalizeAngle(z_diff(1));
 
     // update state mean and covariance matrix
     x_ += K * z_diff;
