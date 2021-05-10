@@ -114,7 +114,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   if (meas_package.sensor_type_ == MeasurementPackage::LASER){
     if (is_initialized_ == false && use_laser_){
       time_us_  = meas_package.timestamp_;
-      UKF::UpdateLidar(meas_package);
+      is_initialized_ = true;
+
+      x_ << meas_package.raw_measurements_(0), //px
+            meas_package.raw_measurements_(1), //py
+            0,                                 //vel_abs
+            0,                                 //yaw_angle
+            0;                                 //yaw_rate
     }
     else if (use_laser_) {
       if (time_us_ != meas_package.timestamp_){
@@ -128,7 +134,17 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   else{
     if (is_initialized_ == false && use_radar_) {
       time_us_  = meas_package.timestamp_;
-      UKF::UpdateRadar(meas_package);
+      is_initialized_ = true;
+      // get values from the raw measurement
+      float r = meas_package.raw_measurements_(0);
+      float theta = meas_package.raw_measurements_(1);
+      float vel = meas_package.raw_measurements_(2);
+      // compute the initial state vector
+      x_ << r * cos(theta),   //px
+            r * sin(theta),   //py
+            0,                //vel_abs // TODO may have to change the sign 
+            theta,            //yaw_angle
+            0;                //yaw_rate
     }
     else if (use_radar_) {
       if (time_us_ != meas_package.timestamp_){
@@ -242,19 +258,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    * covariance, P_.
    * You can also calculate the lidar NIS, if desired.
    */
-  if (is_initialized_ == false){
-    is_initialized_ = true;
-
-    x_ << meas_package.raw_measurements_(0), //px
-          meas_package.raw_measurements_(1), //py
-          0,                                 //vel_abs
-          0,                                 //yaw_angle
-          0;                                 //yaw_rate
-    // std::cout << x_ << std::endl;
-  }
   // handle when two measurements with same time stamp arrive at the beginning
   // first radar and then lidar, no need to average vel, yaw angle, and yaw rate
-  else if (delta_ == 0){
+  if (delta_ == 0){
     x_ << (x_(0) + meas_package.raw_measurements_(0))/2, //px
           (x_(1) + meas_package.raw_measurements_(1))/2, //py
           x_(2),                                         //vel_abs
@@ -275,8 +281,6 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     //new estimate
     x_ = x_ + K * y;
     // std::cout << x_ << std::endl;
-    if (x_(3) > M_PI || x_(3) < -M_PI)
-        x_(3) = normalizeAngle(x_(3));
 
     MatrixXd I = MatrixXd::Identity(n_x_, n_x_);
     P_ = (I - K * H_) * P_;
@@ -290,23 +294,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
    * covariance, P_.
    * You can also calculate the radar NIS, if desired.
    */
-  if (is_initialized_ == false){
-    is_initialized_ = true;
-    // get values from the raw measurement
-    float r = meas_package.raw_measurements_(0);
-    float theta = meas_package.raw_measurements_(1);
-    float vel = meas_package.raw_measurements_(2);
-    // compute the initial state vector
-    x_ << r * cos(theta),   //px
-          r * sin(theta),   //py
-          0,                //vel_abs // TODO may have to change the sign 
-          theta,            //yaw_angle
-          0;                //yaw_rate
-    // std::cout << x_ << std::endl;
-  }
   // handle when two measurements with same time stamp arrive at the beginning
   // first lidar and then radar, so no need to average velocity
-  else if (delta_ == 0){
+  if (delta_ == 0){
     // get values from the raw measurement
     float r = meas_package.raw_measurements_(0);
     float theta = meas_package.raw_measurements_(1);
