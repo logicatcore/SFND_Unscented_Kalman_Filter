@@ -60,9 +60,6 @@ class UKF {
   // predicted sigma points matrix
   Eigen::MatrixXd Xsig_pred_;
 
-  // mean of predicted sigma points
-  Eigen::VectorXd x_pred_;
-
   // time when the state is true, in microseconds us == nu s
   long long time_us_;
 
@@ -101,6 +98,15 @@ class UKF {
 
   // number of sigma points
   int n_sig_; 
+
+  // time difference
+  double delta_;
+
+  // state measurement matrix
+  Eigen::MatrixXd H_;
+
+  // measurement covariance matrix
+  Eigen::MatrixXd R_;
 };
 
 #endif  // UKF_H
