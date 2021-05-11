@@ -86,6 +86,9 @@ UKF::UKF() {
   // time difference
   delta_ = 0;
 
+  // time initialisation
+  time_us_ = 0.0;
+
   // measurement matrix
   H_ = MatrixXd(2, n_x_);
   H_ << 1, 0, 0, 0, 0,
