@@ -89,6 +89,9 @@ UKF::UKF() {
   // time initialisation
   time_us_ = 0.0;
 
+  // initialisation flag
+  is_initialized_ = false;
+
   // measurement matrix
   H_ = MatrixXd(2, n_x_);
   H_ << 1, 0, 0, 0, 0,
@@ -146,7 +149,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       x_ << r * cos(theta),   //px
             r * sin(theta),   //py
             0,                //vel_abs // TODO may have to change the sign 
-            theta,            //yaw_angle
+            0,                //yaw_angle
             0;                //yaw_rate
     }
     else if (use_radar_) {
@@ -308,7 +311,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     x_ << (x_(0) + r * cos(theta))/2, //px
           (x_(1) + r * sin(theta))/2, //py
           0,                          //vel_abs
-          theta,                          //yaw_angle
+          0,                          //yaw_angle
           0;                          //yaw_rate
     // std::cout << x_ << std::endl;
   }
